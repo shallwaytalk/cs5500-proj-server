@@ -1,7 +1,11 @@
-import * as dao from "./users-dao.js";
-import { findByCredentials, findByUsername } from "./users-dao.js";
-import userModel from "../models/userProfile.js";
-
+import {
+  findByCredentials,
+  findByUsername,
+  findByEmail,
+  findTokenByUsername,
+  updateUser,
+} from "./users-dao.js";
+import userRegisterModel from "../models/usersRegister.js";
 let currentUser = null;
 
 const UsersController = (app) => {
@@ -30,12 +34,15 @@ const UsersController = (app) => {
       const username = req.params.username;
       const country = req.body.country;
       const existingUser = await findByUsername(username);
-      const status = await dao.updateUser(username, {...existingUser._doc, country: country});
+      const status = await dao.updateUser(username, {
+        ...existingUser._doc,
+        country: country,
+      });
       return res.json(status);
     } catch (ex) {
       next(ex);
     }
-  }
+  };
 
   const loadUserByUsername = async (req, res) => {
     const username = req.query.username;
@@ -50,13 +57,49 @@ const UsersController = (app) => {
   const register = async (req, res) => {
     const user = req.body;
     const existingUser = await findByUsername(user.username);
-    if (existingUser) {
-      res.sendStatus(403);
+    const existingEmail = await findByEmail(user.email);
+    if (existingUser || existingEmail) {
+      res.sendStatus(409);
+      res
+        .status(409)
+        .send({ message: "User with given username or email already Exist!" });
       return;
     }
     const actualUser = await dao.createUser(user);
+    const token = await findTokenByUsername(user.username);
     currentUser = actualUser;
+    const url = `${process.env.BASE_URL}users/${user.username}/verify/${token.token}`;
+    try {
+      await sendEmail(user.email, "Verify Email", url);
+      res
+        .status(201)
+        .send({ message: "An Email sent to your account please verify" });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({ message: "Internal Server Error" });
+    }
     res.json(actualUser);
+  };
+
+  const verifyToken = async (req, res) => {
+    const user = req.body;
+    try {
+      const user = await findByUsername(user.username);
+      if (!user) return res.status(400).send({ message: "Invalid link" });
+
+      const token = await findTokenByUsername(user.username);
+      if (!token) return res.status(400).send({ message: "Invalid link" });
+
+      await userRegisterModel.updateOne({
+        username: user.username,
+        verified: true,
+      });
+      await token.remove();
+
+      res.status(200).send({ message: "Email verified successfully" });
+    } catch (error) {
+      res.status(500).send({ message: "Internal Server Error" });
+    }
   };
 
   const login = async (req, res) => {
@@ -75,9 +118,10 @@ const UsersController = (app) => {
     } catch (ex) {
       next(ex);
     }
-  }
+  };
 
   app.post("/users", createUser);
+  app.get("/:username/verify/:token", verifyToken);
   app.get("/oneuser", loadUserByUsername);
   app.delete("/users/:uid", deleteUser);
   app.post("/register", register);
