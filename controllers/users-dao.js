@@ -13,12 +13,15 @@ export const createUser = (user) => {
     ...user,
     password: hash,
   };
+  userRegisterModel.create(newUser);
+};
+
+export const createToken = (user) => {
   const token = {
     userId: user.username,
     token: crypto.randomBytes(32).toString("hex"),
   };
   tokenModel.create(token);
-  userRegisterModel.create(newUser);
 };
 
 export const findByUsername = (username) =>

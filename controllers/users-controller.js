@@ -3,7 +3,6 @@ import {
   findByUsername,
   findByEmail,
   findTokenByUsername,
-  updateUser,
 } from "./users-dao.js";
 import userRegisterModel from "../models/usersRegister.js";
 let currentUser = null;
@@ -12,6 +11,11 @@ const UsersController = (app) => {
   const createUser = async (req, res) => {
     const user = req.body;
     const actualUser = await dao.createUser(user);
+    res.json(actualUser);
+  };
+  const createToken = async (req, res) => {
+    const user = req.body;
+    const actualUser = await dao.createToken(user);
     res.json(actualUser);
   };
 
@@ -121,7 +125,8 @@ const UsersController = (app) => {
   };
 
   app.post("/users", createUser);
-  app.get("/:username/verify/:token", verifyToken);
+  app.post("/users/:username/token", createToken);
+  app.get("/users/:username/verify/:token", verifyToken);
   app.get("/oneuser", loadUserByUsername);
   app.delete("/users/:uid", deleteUser);
   app.post("/register", register);
