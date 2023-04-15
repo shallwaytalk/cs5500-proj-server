@@ -71,7 +71,7 @@ const UsersController = (app) => {
       return;
     }
     const actualUser = await dao.createUser(user);
-    const token = await findTokenByUsername(user.username);
+    const token = await dao.createToken(user);
     currentUser = actualUser;
     const url = `${process.env.BASE_URL}users/${user.username}/verify/${token.token}`;
     try {
