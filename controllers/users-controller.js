@@ -4,6 +4,7 @@ import {
   findByEmail,
   findTokenByUsername,
 } from "./users-dao.js";
+import * as dao from "./users-dao.js";
 import userRegisterModel from "../models/usersRegister.js";
 let currentUser = null;
 
