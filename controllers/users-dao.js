@@ -13,15 +13,16 @@ export const createUser = (user) => {
     ...user,
     password: hash,
   };
-  userRegisterModel.create(newUser);
+  console.log("dao createUser", newUser);
+  return userRegisterModel.create(newUser);
 };
 
 export const createToken = (user) => {
-  const token = {
+  const newToken = {
     userId: user.username,
     token: crypto.randomBytes(32).toString("hex"),
   };
-  tokenModel.create(token);
+  return tokenModel.create(newToken);
 };
 
 export const findByUsername = (username) =>
@@ -30,7 +31,7 @@ export const findByUsername = (username) =>
 export const findByEmail = (email) => userRegisterModel.findOne({ email });
 
 export const findTokenByUsername = (username) =>
-  tokenModel.findOne({ username });
+  tokenModel.findOne({ userId: username });
 
 export const findByCredentials = (credential, res) => {
   userRegisterModel.findOne({ username: credential.username }).then((user) => {
@@ -61,8 +62,8 @@ export const findByCredentials = (credential, res) => {
       return res.status(401).json({ msg: "Invalid credencial!" });
     }
     console.log("user login succeed.");
-    const token = user.generateAuthToken();
-    res.status(200).send({ data: token, message: "logged in successfully" });
+    // const token = user.generateAuthToken();
+    res.status(200).send({ message: "logged in successfully" });
     // res.status(200).json(user);
     return;
   });
