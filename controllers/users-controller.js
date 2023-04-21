@@ -103,10 +103,12 @@ const UsersController = (app) => {
       console.log("token", token);
       if (!token) return res.status(400).send({ message: "Invalid link" });
 
-      await userRegisterModel.updateOne({
-        username: user.username,
-        verified: true,
-      });
+      await userRegisterModel.updateOne(
+        {
+          username: user.username,
+        },
+        { verified: true }
+      );
       console.log("after setting verified to true", token);
       await token.remove();
       res.status(200).send({ message: "Email verified successfully" });
